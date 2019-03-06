@@ -47,7 +47,7 @@ _PUBSUB_COMMANDS = (
 
 async def create_connection(address, *, db=None, password=None, ssl=None,
                             encoding=None, parser=None, loop=None,
-                            timeout=None, connection_cls=None):
+                            timeout=None, connection_cls=None, local_addr=None):
     """Creates redis connection.
 
     Opens connection to Redis server specified by address argument.
@@ -104,7 +104,7 @@ async def create_connection(address, *, db=None, password=None, ssl=None,
         host, port = address
         logger.debug("Creating tcp connection to %r", address)
         reader, writer = await asyncio.wait_for(open_connection(
-            host, port, limit=MAX_CHUNK_SIZE, ssl=ssl, loop=loop),
+            host, port, limit=MAX_CHUNK_SIZE, ssl=ssl, loop=loop, local_addr=local_addr),
             timeout, loop=loop)
         sock = writer.transport.get_extra_info('socket')
         if sock is not None:

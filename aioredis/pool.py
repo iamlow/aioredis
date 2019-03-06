@@ -13,7 +13,7 @@ from .locks import Lock
 async def create_pool(address, *, db=None, password=None, ssl=None,
                       encoding=None, minsize=1, maxsize=10,
                       parser=None, loop=None, create_connection_timeout=None,
-                      pool_cls=None, connection_cls=None):
+                      pool_cls=None, connection_cls=None, local_addr=None):
     # FIXME: rewrite docstring
     """Creates Redis Pool.
 
@@ -51,7 +51,8 @@ async def create_pool(address, *, db=None, password=None, ssl=None,
                ssl=ssl, parser=parser,
                create_connection_timeout=create_connection_timeout,
                connection_cls=connection_cls,
-               loop=loop)
+               loop=loop,
+               local_addr=local_addr)
     try:
         await pool._fill_free(override_min=False)
     except Exception:
@@ -69,7 +70,8 @@ class ConnectionsPool(AbcPool):
                  *, minsize, maxsize, ssl=None, parser=None,
                  create_connection_timeout=None,
                  connection_cls=None,
-                 loop=None):
+                 loop=None,
+                 local_addr=None):
         assert isinstance(minsize, int) and minsize >= 0, (
             "minsize must be int >= 0", minsize, type(minsize))
         assert maxsize is not None, "Arbitrary pool size is disallowed."
@@ -95,6 +97,7 @@ class ConnectionsPool(AbcPool):
         self._close_state = CloseEvent(self._do_close, loop=loop)
         self._pubsub_conn = None
         self._connection_cls = connection_cls
+        self._local_addr = local_addr
 
     def __repr__(self):
         return '<{} [db:{}, size:[{}:{}], free:{}]>'.format(
@@ -411,7 +414,8 @@ class ConnectionsPool(AbcPool):
                                  parser=self._parser_class,
                                  timeout=self._create_connection_timeout,
                                  connection_cls=self._connection_cls,
-                                 loop=self._loop)
+                                 loop=self._loop,
+                                 local_addr=self._local_addr)
 
     async def _wakeup(self, closing_conn=None):
         async with self._cond:
